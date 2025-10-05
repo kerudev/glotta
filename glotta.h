@@ -14,11 +14,15 @@
 #define VEC_IMPLEMENTATION
 #include <structypes/vec.h>
 
+#define STR_IMPLEMENTATION
+#include <structypes/str.h>
+
 static const char* GLOTTA_LANGS[] = {
     "C",        "c",
     "C++",      "cpp",
     "Rust",     "rs",
     "Python",   "py",
+    "GLSL",     "vect frag",
 };
 
 int glotta_get_stats(Vec *files, char *path);
@@ -37,17 +41,6 @@ int depth = 0;
 
 void indent(int n) {
     for (size_t i = 0; i < n; i++) printf("  ");
-}
-
-char char_at(char *str, int n) {
-    int size = (int)strlen(str);
-
-    if (n > size) {
-        printf("Index %d out of bounds for string of size %zu\n", n, size);
-        return '\0';
-    }
-
-    return (n < 0) ? str[size + n] : str[n];
 }
 
 int glotta_ignore_path(char *path) {
@@ -73,7 +66,6 @@ int glotta_read_path(Vec *files, char *path) {
         return 0;
     }
 
-    Vec tmp = {0};
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
         if (glotta_ignore_path(entry->d_name)) continue;
@@ -83,30 +75,22 @@ int glotta_read_path(Vec *files, char *path) {
             char dirName[256];
             strcpy(dirName, path);
 
-            if (char_at(dirName, -1) != '/')
+            if (str_char_at(dirName, -1) != '/')
                 strcat(dirName, "/");
 
             strcat(dirName, entry->d_name);
 
-            depth++;
+            Vec *tmp = vec_new(files->item_size);
+            glotta_read_path(tmp, dirName);
 
-            Vec *deep = vec_new(files->item_size);
-            glotta_read_path(deep, dirName);
-
-            printf("%s\n", entry->d_name);
-            for (size_t i = 0; i < deep->size; i++) {
-                indent(depth);
-                printf("%d %s\n", i, (char *)vec_get(deep, i));
-            }
-
-            depth--;
-
-            vec_extend(files, deep);
-            vec_free(deep);
+            vec_extend(files, tmp);
+            vec_free(tmp);
             break;
 
         default:
-            vec_push(files, entry->d_name);
+            char *str = strdup(entry->d_name);
+            vec_push(files, &str);
+            break;
         }
     }
 
