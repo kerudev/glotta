@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #ifndef __USE_MISC
 #define __USE_MISC
@@ -11,10 +12,8 @@
 
 #include <dirent.h>
 
-#define VEC_IMPLEMENTATION
+#define STRUCTYPES_IMPLEMENTATION
 #include <structypes/vec.h>
-
-#define STR_IMPLEMENTATION
 #include <structypes/str.h>
 
 static const char* GLOTTA_LANGS[] = {
@@ -25,11 +24,11 @@ static const char* GLOTTA_LANGS[] = {
     "GLSL",     "vect frag",
 };
 
-int glotta_get_stats(Vec *files, char *path);
+bool glotta_get_stats(Vec *files, char *path);
 
-int glotta_read_path(Vec *files, char *path);
+bool glotta_read_path(Vec *files, char *path);
 
-int glotta_ignore_path(char *path);
+bool glotta_ignore_path(char *path);
 
 // char *glotta_get_lang(char *lang);
 
@@ -43,7 +42,7 @@ void indent(int n) {
     for (size_t i = 0; i < n; i++) printf("  ");
 }
 
-int glotta_ignore_path(char *path) {
+bool glotta_ignore_path(char *path) {
     char *ignored[] = {
         ".",
         "..",
@@ -52,22 +51,22 @@ int glotta_ignore_path(char *path) {
     int len = sizeof(ignored) / sizeof(ignored[0]);
 
     for (size_t i = 0; i < len; i++) {
-        if (strcmp(ignored[i], path) == 0) return 1;
+        if (strcmp(ignored[i], path) == 0) return true;
     }
 
-    return 0;
+    return false;
 }
 
-int glotta_read_path(Vec *files, char *path) {
+bool glotta_read_path(Vec *files, char *path) {
     DIR *dir = opendir(path);
 
     if (dir == NULL) {
         printf("Could not open directory '%s'\n", path);
-        return 0;
+        return false;
     }
 
     struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL) {
+    while ((entry = readdir(dir))) {
         if (glotta_ignore_path(entry->d_name)) continue;
 
         switch (entry->d_type) {
@@ -80,11 +79,7 @@ int glotta_read_path(Vec *files, char *path) {
 
             strcat(dirName, entry->d_name);
 
-            Vec *tmp = vec_new(files->item_size);
-            glotta_read_path(tmp, dirName);
-
-            vec_extend(files, tmp);
-            vec_free(tmp);
+            glotta_read_path(files, dirName);
             break;
 
         default:
@@ -96,16 +91,16 @@ int glotta_read_path(Vec *files, char *path) {
 
     closedir(dir);
 
-    return 1;
+    return true;
 }
 
-int glotta_get_stats(Vec *files, char *path) {
+bool glotta_get_stats(Vec *files, char *path) {
     if (!glotta_read_path(files, path)) {
         perror("glotta_get_stats");
-        return 0;
+        return false;
     }
 
-    return 1;
+    return true;
 }
 
 #endif // GLOTTA_IMPLEMENTATION
