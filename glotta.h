@@ -13,7 +13,7 @@
 #include <dirent.h>
 
 #define STRUCTYPES_IMPLEMENTATION
-#include <structypes/vec.h>
+#include <structypes/tree.h>
 #include <structypes/str.h>
 
 static const char* GLOTTA_LANGS[] = {
@@ -24,9 +24,9 @@ static const char* GLOTTA_LANGS[] = {
     "GLSL",     "vect frag",
 };
 
-bool glotta_get_stats(Vec *files, char *path);
+bool glotta_get_stats(Tree *files, char *path);
 
-bool glotta_read_path(Vec *files, char *path);
+bool glotta_read_path(Tree *files, char *path);
 
 bool glotta_ignore_path(char *path);
 
@@ -35,12 +35,6 @@ bool glotta_ignore_path(char *path);
 #endif  // GLOTTA_H
 
 #ifdef GLOTTA_IMPLEMENTATION
-
-int depth = 0;
-
-void indent(int n) {
-    for (size_t i = 0; i < n; i++) printf("  ");
-}
 
 bool glotta_ignore_path(char *path) {
     char *ignored[] = {
@@ -57,9 +51,8 @@ bool glotta_ignore_path(char *path) {
     return false;
 }
 
-bool glotta_read_path(Vec *files, char *path) {
+bool glotta_read_path(Tree *files, char *path) {
     DIR *dir = opendir(path);
-
     if (dir == NULL) {
         printf("Could not open directory '%s'\n", path);
         return false;
@@ -79,12 +72,13 @@ bool glotta_read_path(Vec *files, char *path) {
 
             strcat(dirName, entry->d_name);
 
-            glotta_read_path(files, dirName);
+            Node *node = node_new(files, strdup(dirName));
+            glotta_read_path(node, node->value);
+            node_add_child(files, node);
             break;
 
         default:
-            char *str = strdup(entry->d_name);
-            vec_push(files, &str);
+            node_new_child(files, strdup(entry->d_name));
             break;
         }
     }
@@ -94,9 +88,9 @@ bool glotta_read_path(Vec *files, char *path) {
     return true;
 }
 
-bool glotta_get_stats(Vec *files, char *path) {
+bool glotta_get_stats(Tree *files, char *path) {
     if (!glotta_read_path(files, path)) {
-        perror("glotta_get_stats");
+        printf("glotta_get_stats: error while reading %s\n", path);
         return false;
     }
 

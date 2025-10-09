@@ -5,24 +5,34 @@
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        printf("Please provide a directory to read\n");
+        printf("[ERR ]  Please provide a directory to read\n");
         return 1;
     }
 
-    Vec *result = vec_new(sizeof(char *));
+    char *path = argv[1];
 
-    printf("Getting stats\n\n");
-    if (!glotta_get_stats(result, argv[1])) {
-        perror("main");
+    Tree *result = tree_new(path);
+
+    printf("[INFO]  Getting stats\n");
+    if (!glotta_get_stats(result, path)) {
+        printf("[ERR ]  Getting stats failed\n");
         return 1;
     }
 
-    printf("Printing stats\n");
-    vec_print(result);
-
-    printf("\nFreeing stats\n");
-    vec_free_deep(result);
-    printf("Stats freed\n");
+    printf("\n");
+    printf("[INFO]  Printing stats\n");
+    if (!tree_print(result)) {
+        printf("[ERR ]  Printing failed\n");
+        return 1;
+    }
+    
+    printf("\n");
+    printf("[INFO]  Freeing stats\n");
+    if (!tree_free(result)) {
+        printf("[ERR ]  Freeing failed\n");
+        return 1;
+    }
+    printf("[INFO]  Stats freed\n");
 
     return 0;
 }
