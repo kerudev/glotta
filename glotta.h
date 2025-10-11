@@ -64,15 +64,10 @@ bool glotta_read_path(Tree *files, char *path) {
 
         switch (entry->d_type) {
         case DT_DIR:
-            char dirName[256];
-            strcpy(dirName, path);
+            char *slash = (str_char_at(path, -1) != '/') ? "/" : "";
+            char *dirName = str_concat_va(path, slash, entry->d_name, NULL);
 
-            if (str_char_at(dirName, -1) != '/')
-                strcat(dirName, "/");
-
-            strcat(dirName, entry->d_name);
-
-            Node *node = node_new(files, strdup(dirName));
+            Node *node = node_new(files, dirName);
             glotta_read_path(node, node->value);
             node_add_child(files, node);
             break;
