@@ -21,17 +21,18 @@ int main(int argc, char *argv[]) {
 
     printf("\n");
     printf("[INFO]  Printing stats\n");
-    if (!tree_print(result)) {
+    if (!node_print(result, nodeprintopts_default())) {
         printf("[ERR ]  Printing failed\n");
         return 1;
     }
-    
+
     printf("\n");
     printf("[INFO]  Freeing stats\n");
-    if (!tree_free(result)) {
+    if (!node_free(result)) {
         printf("[ERR ]  Freeing failed\n");
         return 1;
     }
+
     printf("[INFO]  Stats freed\n");
 
     return 0;

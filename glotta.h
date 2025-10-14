@@ -13,6 +13,7 @@
 #include <dirent.h>
 
 #define STRUCTYPES_IMPLEMENTATION
+#define STRUCTYPES_DEBUG
 #include <structypes/tree.h>
 #include <structypes/str.h>
 
@@ -67,13 +68,13 @@ bool glotta_read_path(Tree *files, char *path) {
             char *slash = (str_char_at(path, -1) != '/') ? "/" : "";
             char *dirName = str_concat_va(path, slash, entry->d_name, NULL);
 
-            Node *node = node_new(files, dirName);
-            glotta_read_path(node, node->value);
+            Node *node = node_new(files, str_clone(entry->d_name));
+            glotta_read_path(node, dirName);
             node_add_child(files, node);
             break;
 
         default:
-            node_new_child(files, strdup(entry->d_name));
+            node_new_child(files, str_clone(entry->d_name));
             break;
         }
     }
