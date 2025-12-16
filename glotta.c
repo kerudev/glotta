@@ -1,8 +1,6 @@
 #define GLOTTA_IMPLEMENTATION
 #include "glotta.h"
 
-#include <time.h>
-
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         printf("[ERR ]  Please provide a directory to read\n");
@@ -10,8 +8,7 @@ int main(int argc, char *argv[]) {
     }
 
     char *path = argv[1];
-
-    Tree *result = tree_new(path);
+    Node *result = node_new(str_clone(path));
 
     printf("[INFO]  Getting stats\n");
     if (!glotta_get_stats(result, path)) {

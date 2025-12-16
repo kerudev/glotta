@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
 
 #ifndef __USE_MISC
@@ -14,20 +13,22 @@
 
 #define STRUCTYPES_IMPLEMENTATION
 #define STRUCTYPES_DEBUG
-#include <structypes/tree.h>
+#include <structypes/hashmap.h>
+#include <structypes/node.h>
 #include <structypes/str.h>
 
-static const char* GLOTTA_LANGS[] = {
-    "C",        "c",
-    "C++",      "cpp",
-    "Rust",     "rs",
-    "Python",   "py",
-    "GLSL",     "vect frag",
-};
+// static HashMap *GLOTTA_LANGS = hashmap_new(HASHMAP_CAPACITY_STEP);
 
-bool glotta_get_stats(Tree *files, char *path);
+//  "C",        "c",
+//  "C++",      "cpp",
+//  "Rust",     "rs",
+//  "Python",   "py",
+//  "GLSL",     "vect",
+//  "GLSL",     "frag",
 
-bool glotta_read_path(Tree *files, char *path);
+bool glotta_get_stats(Node *files, char *path);
+
+bool glotta_read_path(Node *files, char *path);
 
 bool glotta_ignore_path(char *path);
 
@@ -43,16 +44,16 @@ bool glotta_ignore_path(char *path) {
         "..",
     };
 
-    int len = sizeof(ignored) / sizeof(ignored[0]);
+    size_t len = sizeof(ignored) / sizeof(ignored[0]);
 
     for (size_t i = 0; i < len; i++) {
-        if (strcmp(ignored[i], path) == 0) return true;
+        if (str_eq(ignored[i], path)) return true;
     }
 
     return false;
 }
 
-bool glotta_read_path(Tree *files, char *path) {
+bool glotta_read_path(Node *files, char *path) {
     DIR *dir = opendir(path);
     if (dir == NULL) {
         printf("Could not open directory '%s'\n", path);
@@ -63,19 +64,14 @@ bool glotta_read_path(Tree *files, char *path) {
     while ((entry = readdir(dir))) {
         if (glotta_ignore_path(entry->d_name)) continue;
 
-        switch (entry->d_type) {
-        case DT_DIR:
+        Node *node = node_add(files, str_clone(entry->d_name));
+
+        if (entry->d_type == DT_DIR) {
             char *slash = (str_char_at(path, -1) != '/') ? "/" : "";
-            char *dirName = str_concat_va(path, slash, entry->d_name, NULL);
+            char *dirName = str_concat(path, slash, entry->d_name);
 
-            Node *node = node_new(files, str_clone(entry->d_name));
             glotta_read_path(node, dirName);
-            node_add_child(files, node);
-            break;
-
-        default:
-            node_new_child(files, str_clone(entry->d_name));
-            break;
+            free(dirName);
         }
     }
 
@@ -84,7 +80,7 @@ bool glotta_read_path(Tree *files, char *path) {
     return true;
 }
 
-bool glotta_get_stats(Tree *files, char *path) {
+bool glotta_get_stats(Node *files, char *path) {
     if (!glotta_read_path(files, path)) {
         printf("glotta_get_stats: error while reading %s\n", path);
         return false;

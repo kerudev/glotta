@@ -1,3 +1,8 @@
+CC = gcc
+CCFLAGS = -std=c99 \
+	-fsanitize=address -ggdb \
+	-Wall -Wextra
+
 SRC = glotta.c
 HEADERS = glotta.h
 BUILD_DIR = build
@@ -7,7 +12,7 @@ all: $(BIN)
 
 $(BIN): $(SRC) $(HEADERS)
 	@mkdir -p $(BUILD_DIR)
-	gcc -I. -I/usr/include/structypes $(SRC) -o $(BIN)
+	$(CC) $(CCFLAGS) $(SRC) -o $(BIN)
 
 clean:
 	rm -rf $(BUILD_DIR)/*
