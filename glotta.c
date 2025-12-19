@@ -2,35 +2,19 @@
 #include "glotta.h"
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        printf("[ERR ]  Please provide a directory to read\n");
-        return 1;
+    if (argc < 3) {
+        printf("Usage: %s <path> <-p>\n", argv[0]);
+        printf("-p: print contents of a directory in tree form.\n");
+        return 0;
     }
 
     char *path = argv[1];
-    Node *result = node_new(str_clone(path));
+    char *arg = argv[2];
 
-    printf("[INFO]  Getting stats\n");
-    if (!glotta_get_stats(result, path)) {
-        printf("[ERR ]  Getting stats failed\n");
-        return 1;
-    }
+    printf("[INFO]  Path: %s\n", path);
+    printf("[INFO]  Args: %s\n", arg);
 
-    printf("\n");
-    printf("[INFO]  Printing stats\n");
-    if (!node_print(result, nodeprintopts_default())) {
-        printf("[ERR ]  Printing failed\n");
-        return 1;
-    }
-
-    printf("\n");
-    printf("[INFO]  Freeing stats\n");
-    if (!node_free(result)) {
-        printf("[ERR ]  Freeing failed\n");
-        return 1;
-    }
-
-    printf("[INFO]  Stats freed\n");
+    if (str_eq(arg, "-p") && !glotta_print_path(path)) return 1;
 
     return 0;
 }

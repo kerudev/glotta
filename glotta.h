@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifndef __USE_MISC
 #define __USE_MISC
@@ -17,22 +18,15 @@
 #include <structypes/node.h>
 #include <structypes/str.h>
 
-// static HashMap *GLOTTA_LANGS = hashmap_new(HASHMAP_CAPACITY_STEP);
-
-//  "C",        "c",
-//  "C++",      "cpp",
-//  "Rust",     "rs",
-//  "Python",   "py",
-//  "GLSL",     "vect",
-//  "GLSL",     "frag",
-
 bool glotta_get_stats(Node *files, char *path);
 
 bool glotta_read_path(Node *files, char *path);
 
 bool glotta_ignore_path(char *path);
 
-// char *glotta_get_lang(char *lang);
+bool glotta_init_langs();
+
+static HashMap *GLOTTA_LANGS = NULL;
 
 #endif  // GLOTTA_H
 
@@ -68,10 +62,10 @@ bool glotta_read_path(Node *files, char *path) {
 
         if (entry->d_type == DT_DIR) {
             char *slash = (str_char_at(path, -1) != '/') ? "/" : "";
-            char *dirName = str_concat(path, slash, entry->d_name);
+            char *dir_name = str_concat(path, slash, entry->d_name);
 
-            glotta_read_path(node, dirName);
-            free(dirName);
+            glotta_read_path(node, dir_name);
+            free(dir_name);
         }
     }
 
@@ -85,6 +79,34 @@ bool glotta_get_stats(Node *files, char *path) {
         printf("glotta_get_stats: error while reading %s\n", path);
         return false;
     }
+
+    return true;
+}
+
+bool glotta_print_path(char *path) {
+    Node *result = node_new(str_clone(path));
+
+    printf("[INFO]  Getting stats\n");
+    if (!glotta_get_stats(result, path)) {
+        printf("[ERR ]  Getting stats failed\n");
+        return false;
+    }
+
+    printf("\n");
+    printf("[INFO]  Printing stats\n");
+    if (!node_print(result, nodeprintopts_default())) {
+        printf("[ERR ]  Printing failed\n");
+        return false;
+    }
+
+    printf("\n");
+    printf("[INFO]  Freeing stats\n");
+    if (!node_free(result)) {
+        printf("[ERR ]  Freeing failed\n");
+        return false;
+    }
+
+    printf("[INFO]  Stats freed\n");
 
     return true;
 }
