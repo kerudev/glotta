@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
     if (str_eq(arg, "-p") && glotta_print_path(path)) return 0;
     if (str_eq(arg, "-l") && glotta_print_lines(path)) return 0;
 
-    printf("[ERR ] Unknown argument %s\n", arg);
+    printf("[ERR ]  Unknown argument %s\n", arg);
 
     return 1;
 }

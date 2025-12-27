@@ -39,6 +39,7 @@ static HashMap *GLOTTA_LANGS = NULL;
 #ifdef GLOTTA_IMPLEMENTATION
 
 bool glotta_ignore_path(char *path) {
+    // TODO read .gitignores
     char *ignored[] = {
         ".",
         "..",
@@ -56,7 +57,7 @@ bool glotta_ignore_path(char *path) {
 bool glotta_read_path(Node *files, char *path) {
     DIR *dir = opendir(path);
     if (dir == NULL) {
-        printf("Could not open directory '%s'\n", path);
+        printf("[ERR ]  Could not open directory '%s'\n", path);
         return false;
     }
 
@@ -81,9 +82,10 @@ bool glotta_read_path(Node *files, char *path) {
 }
 
 bool glotta_read_lines(HashMap *lines, char *path) {
+    // TODO handle case where path is not dir (count lines as well)
     DIR *dir = opendir(path);
     if (dir == NULL) {
-        printf("Could not open directory '%s'\n", path);
+        printf("[ERR ]  Could not open directory '%s'\n", path);
         return false;
     }
 
@@ -119,9 +121,8 @@ bool glotta_read_lines(HashMap *lines, char *path) {
 
         fclose(f);
 
-        if (count == 0) continue;
-
-        hashmap_set(lines, ext, (void *)(intptr_t)count);
+        hash_t hash = hashmap_hash(ext, lines->capacity);
+        lines->items[hash]->value = (void*)(intptr_t)count;
     }
 
     closedir(dir);
@@ -131,7 +132,7 @@ bool glotta_read_lines(HashMap *lines, char *path) {
 
 bool glotta_get_stats(Node *files, char *path) {
     if (!glotta_read_path(files, path)) {
-        printf("glotta_get_stats: error while reading %s\n", path);
+        printf("[ERR ]  Error while reading %s\n", path);
         return false;
     }
 
@@ -174,6 +175,7 @@ bool glotta_print_lines(char *path) {
 
     printf("[INFO]  Getting stats\n");
     if (!glotta_read_lines(result, path)) {
+        // TODO free hashmaps when there is an error
         printf("[ERR ]  Getting stats failed\n");
         return false;
     }
@@ -184,20 +186,29 @@ bool glotta_print_lines(char *path) {
     printf("%s\n", path);
     for (size_t i = 0; i < result->capacity; i++) {
         if (!result->items[i]) continue;
-
         printf("- %s: %d\n", result->items[i]->key, (int)(intptr_t)result->items[i]->value);
     }
 
     printf("\n");
     printf("[INFO]  Freeing stats\n");
-    if (!hashmap_free_stack(result)) {
-        printf("[ERR ]  Freeing failed\n");
+    for (size_t i = 0; i < result->capacity; i++) {
+        if (!result->size) break;
+        if (!result->items[i]) continue;
+
+        free(result->items[i]->key);
+        free(result->items[i]);
+
+        result->size--;
+    }
+
+    if (!hashmap_free_struct(result)) {
+        printf("[ERR ]  Freeing struct failed\n");
         return false;
     }
 
     printf("[INFO]  Freeing langs\n");
     if (!hashmap_free_stack(GLOTTA_LANGS)) {
-        printf("[ERR ]  Freeing failed\n");
+        printf("[ERR ]  Freeing langs failed\n");
         return false;
     }
 
