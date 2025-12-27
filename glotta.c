@@ -5,7 +5,8 @@ int main(int argc, char *argv[]) {
     if (argc < 3) {
         printf("Usage: %s <path> <-p|-l>\n", argv[0]);
         printf("-p: print contents of a directory in tree form.\n");
-        printf("-l: count the lines of each.\n");
+        printf("-l: count the lines of each file by type.\n");
+        printf("-s: count the size of each file by type.\n");
         return 0;
     }
 
@@ -17,6 +18,7 @@ int main(int argc, char *argv[]) {
 
     if (str_eq(arg, "-p") && glotta_print_path(path)) return 0;
     if (str_eq(arg, "-l") && glotta_print_lines(path)) return 0;
+    if (str_eq(arg, "-s") && glotta_print_size(path)) return 0;
 
     printf("[ERR ]  Unknown argument %s\n", arg);
 
