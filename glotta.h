@@ -261,11 +261,7 @@ bool glotta_print_lines(char *path) {
     glotta_init_langs();
 
     printf("[INFO]  Getting stats\n");
-    if (!glotta_read_lines(result, path)) {
-        // TODO free hashmaps when there is an error
-        printf("[ERR ]  Getting stats failed\n");
-        return false;
-    }
+    if (!glotta_read_lines(result, path)) goto defer;
 
     printf("\n");
     printf("[INFO]  Printing stats\n");
@@ -276,6 +272,9 @@ bool glotta_print_lines(char *path) {
         printf("- %s: %d\n", result->items[i]->key, (int)(intptr_t)result->items[i]->value);
     }
 
+    goto defer;
+
+defer:
     printf("\n");
     printf("[INFO]  Freeing stats\n");
     for (size_t i = 0; i < result->capacity; i++) {
@@ -311,11 +310,7 @@ bool glotta_print_size(char *path) {
     glotta_init_langs();
 
     printf("[INFO]  Getting stats\n");
-    if (!glotta_read_size(result, path)) {
-        // TODO free hashmaps when there is an error
-        printf("[ERR ]  Getting stats failed\n");
-        return false;
-    }
+    if (!glotta_read_size(result, path)) goto defer;
 
     printf("\n");
     printf("[INFO]  Printing stats\n");
@@ -326,6 +321,9 @@ bool glotta_print_size(char *path) {
         printf("- %s: %d\n", result->items[i]->key, (int)(intptr_t)result->items[i]->value);
     }
 
+    goto defer;
+
+defer:
     printf("\n");
     printf("[INFO]  Freeing stats\n");
     for (size_t i = 0; i < result->capacity; i++) {
@@ -361,11 +359,7 @@ bool glotta_print_count(char *path) {
     glotta_init_langs();
 
     printf("[INFO]  Getting stats\n");
-    if (!glotta_read_count(result, path)) {
-        // TODO free hashmaps when there is an error
-        printf("[ERR ]  Getting stats failed\n");
-        return false;
-    }
+    if (!glotta_read_count(result, path)) goto defer;
 
     printf("\n");
     printf("[INFO]  Printing stats\n");
@@ -376,6 +370,9 @@ bool glotta_print_count(char *path) {
         printf("- %s: %d\n", result->items[i]->key, (int)(intptr_t)result->items[i]->value);
     }
 
+    goto defer;
+
+defer:
     printf("\n");
     printf("[INFO]  Freeing stats\n");
     for (size_t i = 0; i < result->capacity; i++) {
