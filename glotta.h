@@ -24,11 +24,15 @@ bool glotta_read_lines(HashMap *lines, char *path);
 
 bool glotta_read_size(HashMap *lines, char *path);
 
+bool glotta_read_count(HashMap *lines, char *path);
+
 bool glotta_print_path(char *path);
 
 bool glotta_print_lines(char *path);
 
 bool glotta_print_size(char *path);
+
+bool glotta_print_count(char *path);
 
 bool glotta_ignore_path(char *path);
 
@@ -135,6 +139,7 @@ bool glotta_read_lines(HashMap *lines, char *path) {
 bool glotta_read_size(HashMap *sizes, char *path) {
     // TODO handle case where path is not dir (count size as well)
     DIR *dir = opendir(path);
+
     if (dir == NULL) {
         printf("[ERR ]  Could not open directory '%s'\n", path);
         return false;
@@ -173,6 +178,47 @@ bool glotta_read_size(HashMap *sizes, char *path) {
 
         hash_t hash = hashmap_hash(ext, sizes->capacity);
         sizes->items[hash]->value = (void*)count;
+    }
+
+    closedir(dir);
+
+    return true;
+}
+
+bool glotta_read_count(HashMap *counts, char *path) {
+    // TODO handle case where path is not dir (count size as well)
+    DIR *dir = opendir(path);
+
+    if (dir == NULL) {
+        printf("[ERR ]  Could not open directory '%s'\n", path);
+        return false;
+    }
+
+    // TODO handle case where extension is not in list
+    struct dirent *entry;
+    while ((entry = readdir(dir))) {
+        if (glotta_ignore_path(entry->d_name)) continue;
+
+        if (entry->d_type == DT_DIR) {
+            char *slash = (str_char_at(path, -1) != '/') ? "/" : "";
+            char *dir_name = str_concat(path, slash, entry->d_name);
+
+            glotta_read_count(counts, dir_name);
+            free(dir_name);
+
+            continue;
+        }
+
+        char *ext = str_split_last(entry->d_name, ".");
+
+        void *value = hashmap_get(counts, ext);
+        if (value == NULL) hashmap_set(counts, ext, 0);
+
+        int count = value ? (int)(intptr_t)value : 0;
+        count++;
+
+        hash_t hash = hashmap_hash(ext, counts->capacity);
+        counts->items[hash]->value = (void*)(intptr_t)count;
     }
 
     closedir(dir);
@@ -266,6 +312,56 @@ bool glotta_print_size(char *path) {
 
     printf("[INFO]  Getting stats\n");
     if (!glotta_read_size(result, path)) {
+        // TODO free hashmaps when there is an error
+        printf("[ERR ]  Getting stats failed\n");
+        return false;
+    }
+
+    printf("\n");
+    printf("[INFO]  Printing stats\n");
+
+    printf("%s\n", path);
+    for (size_t i = 0; i < result->capacity; i++) {
+        if (!result->items[i]) continue;
+        printf("- %s: %d\n", result->items[i]->key, (int)(intptr_t)result->items[i]->value);
+    }
+
+    printf("\n");
+    printf("[INFO]  Freeing stats\n");
+    for (size_t i = 0; i < result->capacity; i++) {
+        if (!result->size) break;
+        if (!result->items[i]) continue;
+
+        free(result->items[i]->key);
+        free(result->items[i]);
+
+        result->size--;
+    }
+
+    if (!hashmap_free_struct(result)) {
+        printf("[ERR ]  Freeing struct failed\n");
+        return false;
+    }
+
+    printf("[INFO]  Freeing langs\n");
+    if (!hashmap_free_stack(GLOTTA_LANGS)) {
+        printf("[ERR ]  Freeing langs failed\n");
+        return false;
+    }
+
+    printf("[INFO]  Stats freed\n");
+
+    return true;
+}
+
+bool glotta_print_count(char *path) {
+    HashMap *result = hashmap_new(HASHMAP_CAPACITY_STEP);
+
+    printf("[INFO]  Initializing languages hashmap\n");
+    glotta_init_langs();
+
+    printf("[INFO]  Getting stats\n");
+    if (!glotta_read_count(result, path)) {
         // TODO free hashmaps when there is an error
         printf("[ERR ]  Getting stats failed\n");
         return false;
